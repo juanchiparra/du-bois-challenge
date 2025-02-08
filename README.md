@@ -11,4 +11,4 @@ I decided to participate using D3.js and allowing me to use a more modern style.
 ## 2025
 
 ### Week 1
-![Challenge 01](https://github.com/juanchiparra/du-bois-challenge/blob/main/2025/Challenge01/Challenge01.png)
+![Challenge 01](https://github.com/juanchiparra/du-bois-challenge/blob/main/2025/Challenge01/challenge01.png)
