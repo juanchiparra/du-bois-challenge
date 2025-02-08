@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <title>Challenge 01</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;300;400;700&display=swap"
+        rel="stylesheet">
+    <link href="challenge01.css" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container" id="chart"></div>
+    <script type="module">
+        // Access data
+        import { data } from './challenge01.js';
+
+        // Add formatting
+        const formatDollar = d3.format("$.3s");
+
+
+        // Create chart dimensions
+        const width = 1584 / 2;
+        const height = 2016 / 2;
+
+        // Draw canvas
+        const wrapper_challenge01 = d3.select("#chart")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .attr("preserveAspectRatio", "xMidYMid meet");
+
+        // Define diagonal pattern
+        const defs = wrapper_challenge01.append("defs");
+
+        defs.append("pattern")
+            .attr("id", "diagonalHatch")
+            .attr("patternUnits", "userSpaceOnUse")
+            .attr("width", 10)
+            .attr("height", 10);
+
+        defs.select("#diagonalHatch")
+            .append("path")
+            .attr("d", "M10,0 l-10,10 M15,5 l-10,10 M5,-5 l-10,10")
+            .attr("stroke", "#f5f5f5")
+            .attr("stroke-width", 0.9);
+
+        // Draw background
+        wrapper_challenge01.append("rect")
+            .attr("class", "background")
+            .attr("width", "100%")
+            .attr("height", "100%");
+
+        // Add title
+        wrapper_challenge01.append("text")
+            .attr("class", "title")
+            .attr("x", width / 2)
+            .attr("y", 34)
+            .attr("text-anchor", "middle")
+            .html(`
+                <tspan x="${width / 2}" dy="1.2em" font-weight="800">VALUE</tspan>
+                <tspan font-weight="100">OF</tspan>
+                <tspan font-weight="800">LAND</tspan>
+                <tspan font-weight="100">OWNED</tspan> 
+                <tspan x="${width / 2}" dy="1.2em" font-weight="100">BY GEORGIA</tspan>
+                <tspan font-weight="800">NEGROES</tspan>
+            `);
+
+        // Create scales
+        const maxValue = d3.max(data, d => d.value);
+        const powScale = d3.scalePow()
+            .exponent(0.5)
+            .domain([0, maxValue])
+            .range([0, 170]);
+
+        // Draw data
+        const groupWrapper = wrapper_challenge01.selectAll(".group-wrapper")
+            .data(data)
+            .enter()
+            .append("g")
+            .attr("class", "group-wrapper")
+            .attr("transform", (d, i) => `translate(${width / 2}, ${i * (100 + i * 6.5) + 214})`);
+
+        groupWrapper.append("rect")
+            .attr("width", d => powScale(d.value))
+            .attr("height", d => powScale(d.value) / 2)
+            .attr("x", d => -powScale(d.value) / 2)
+            .attr("y", d => -powScale(d.value) / 4)
+            .attr("fill", "url(#diagonalHatch)");
+
+        // Add labels
+        groupWrapper.append("rect")
+            .attr("class", "label-background")
+            .attr("x", -35)
+            .attr("y", -12)
+            .attr("width", 70)
+            .attr("height", 24);
+
+        groupWrapper.append("text")
+            .attr("class", "values")
+            .attr("x", 0)
+            .attr("y", 0)
+            .attr("text-anchor", "middle")
+            .attr("dy", "0.1em")
+            .text(d => formatDollar(d.value));
+
+        groupWrapper.append("line")
+            .attr("class", "line")
+            .attr("x1", d => powScale(d.value) / 2 + 6)
+            .attr("y1", 0)
+            .attr("x2", d => powScale(d.value) / 2 + 30)
+            .attr("y2", 0);
+
+        groupWrapper.append("text")
+            .attr("class", "years")
+            .attr("x", d => powScale(d.value) / 2 + 54)
+            .attr("y", 0)
+            .attr("text-anchor", "end")
+            .attr("dy", "0.1em")
+            .text(d => d.year);
+    </script>
+</body>
+
+</html>
