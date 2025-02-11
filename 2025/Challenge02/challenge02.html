@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <title>Challenge 02</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;300;400;700&display=swap"
+        rel="stylesheet">
+    <link href="challenge02.css" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container" id="chart"></div>
+    <script type="module">
+        // Access data
+        import { data } from './challenge02.js';
+
+        // Add formatting
+        const formatDollar = d3.format(",");
+
+        // Create chart dimensions
+        const width = 1584 / 2;
+        const height = 2016 / 2;
+
+        // Draw canvas
+        const wrapper_challenge02 = d3.select("#chart")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .attr("preserveAspectRatio", "xMidYMid meet");
+
+        // Draw background
+        wrapper_challenge02.append("rect")
+            .attr("class", "background")
+            .attr("width", width)
+            .attr("height", height);
+
+        const groupWrapper = wrapper_challenge02.append("g")
+            .attr("transform", `translate(80,150)`);
+
+        // Add title
+        wrapper_challenge02.append("text")
+            .attr("class", "title")
+            .attr("x", (width) / 2)
+            .attr("y", 34)
+            .attr("text-anchor", "middle")
+            .html(`
+                <tspan x="${(width) / 2}" dy="1.2em" font-weight="800">ACRES</tspan>
+                <tspan font-weight="100">OF</tspan>
+                <tspan font-weight="800">LANDS</tspan>
+                <tspan font-weight="100">OWNED</tspan>
+                <tspan x="${(width) / 2}" dy="1.2em" font-weight="100">BY</tspan> 
+                <tspan font-weight="800">NEGROES</tspan>
+                <tspan font-weight="100">IN GEORGIA</tspan>
+            `);
+
+        // Create scales
+        const x = d3.scaleLinear()
+            .domain([0, d3.max(data, d => d.value)])
+            .range([0, width * 0.8]);
+
+        const y = d3.scaleBand()
+            .domain(data.map(d => d.year))
+            .range([0, height * 0.82])
+            .padding(0.4);
+
+        // Draw data
+        groupWrapper.selectAll(".bar")
+            .data(data)
+            .enter()
+            .append("rect")
+            .attr("class", "bar")
+            .attr("x", 0)
+            .attr("y", d => y(d.year))
+            .attr("width", d => x(d.value))
+            .attr("height", y.bandwidth());
+
+        // Draw peripherals
+        groupWrapper.append("g")
+            .attr("class", "y-axis")
+            .call(d3.axisLeft(y));
+
+        // Add labels
+        groupWrapper.append("text")
+            .attr("class", "value-label")
+            .attr("x", d => x(data[0].value) / 2)
+            .attr("y", y(data[0].year) + y.bandwidth() / 2)
+            .attr("dy", ".35em")
+            .attr("text-anchor", "middle")
+            .text(formatDollar(data[0].value));
+
+        groupWrapper.append("text")
+            .attr("class", "value-label")
+            .attr("x", d => x(data[data.length - 1].value) / 2)
+            .attr("y", y(data[data.length - 1].year) + y.bandwidth() / 2)
+            .attr("dy", ".35em")
+            .attr("text-anchor", "middle")
+            .text(formatDollar(data[data.length - 1].value));
+    </script>
+</body>
+
+</html>
