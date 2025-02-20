@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://d3js.org/topojson.v1.min.js"></script>
+    <title>Challenge 3</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;300;400;700&display=swap"
+        rel="stylesheet">
+    <link href="challenge03.css" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container" id="chart"></div>
+    <script type="module">
+        // Access data
+        import { data } from './challenge03.js';
+
+        // Add formatting
+        const formatDollar = d3.format(",");
+
+        // Create chart dimensions
+        const width = 1584 / 2;
+        const height = 2016 / 2;
+
+        // Draw canvas
+        const wrapper_challenge03 = d3.select("#chart")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .attr("preserveAspectRatio", "xMidYMid meet");
+
+        // Draw background
+        wrapper_challenge03.append("rect")
+            .attr("class", "background")
+            .attr("width", width)
+            .attr("height", height);
+
+        const groupWrapper = wrapper_challenge03.append("g")
+            .attr("transform", `translate(80,150)`);
+
+        // Add title
+        wrapper_challenge03.append("text")
+            .attr("class", "title")
+            .attr("x", (width) / 2)
+            .attr("y", 34)
+            .attr("text-anchor", "middle")
+            .html(`
+                <tspan x="${(width) / 2}" dy="1.2em" font-weight="800">LAND</tspan>
+                <tspan font-weight="100">OWNED BY</tspan>
+                <tspan font-weight="800">NEGROES</tspan>
+                <tspan font-weight="100">IN</tspan>
+                <tspan x="${(width) / 2}" dy="1.2em" font-weight="800">GEORGIA,</tspan> 
+                <tspan font-weight="100">U.S.A.</tspan>
+                <tspan font-weight="600">1870-1900</tspan>
+            `);
+
+        // Add labels
+        wrapper_challenge03.append("text")
+            .attr("class", "description")
+            .attr("x", (width) / 2)
+            .attr("y", 150)
+            .attr("text-anchor", "middle")
+            .html(`
+                <tspan x="${(width) / 2 - 10}" dy="1.2em">The figures indicate the number of</tspan>
+                <tspan x="${(width) / 2 - 10}" dy="1.2em">acres owned in each county in 1899</tspan>
+            `)
+            .style("font-size", "14px")
+            .style("font-weight", "300")
+            .style("fill", "white");
+
+        // Create scales
+        const projection = d3.geoMercator()
+            .center([-83.5, 33.5])
+            .scale(7000)
+            .translate([width / 2, height / 2]);
+
+        const colorScale = d3.scaleSequential(d3.interpolateBlues)
+            .domain(d3.extent(data, d => d.acres));
+
+        // Define a path generator
+        const path = d3.geoPath().projection(projection);
+
+        // Load TopoJSON data
+        d3.json("./challenge03.topojson").then(topoData => {
+
+            const geoData = topojson.feature(topoData, topoData.objects.sample); // Ajusta 'sample' al nombre correcto
+            const georgia = geoData.features.filter(d => d.properties.STATENAM === "Georgia");
+
+            // Draw data
+            wrapper_challenge03.selectAll(".county")
+                .data(georgia)
+                .enter()
+                .append("path")
+                .attr("class", "county")
+                .attr("d", path)
+                .attr("fill", d => {
+                    const county = data.find(c => c.county === d.properties.NHGISNAM);
+                    return county ? colorScale(county.acres) : "white";
+                })
+                .attr("stroke", "black");
+
+
+            // Add legend
+            const legendWidth = 300;
+            const legendHeight = 20;
+
+            const defs = wrapper_challenge03.append("defs");
+
+            const linearGradient = defs.append("linearGradient")
+                .attr("id", "linear-gradient");
+
+            linearGradient.selectAll("stop")
+                .data(colorScale.ticks().map((t, i, n) => ({
+                    offset: `${100 * i / n.length}%`,
+                    color: colorScale(t)
+                })))
+                .enter().append("stop")
+                .attr("offset", d => d.offset)
+                .attr("stop-color", d => d.color);
+
+            wrapper_challenge03.append("rect")
+                .attr("x", (width - legendWidth - 24) / 2)
+                .attr("y", height - 786)
+                .attr("width", legendWidth)
+                .attr("height", legendHeight)
+                .style("fill", "url(#linear-gradient)");
+
+                wrapper_challenge03.append("rect")
+                .attr("x", (width - legendWidth - 24) / 2)
+                .attr("y", 225)
+                .attr("width", legendWidth)
+                .attr("height", legendHeight)
+                .style("fill", "url(#linear-gradient)");
+
+            const legendScale = d3.scaleLinear()
+                .domain(colorScale.domain())
+                .range([0, legendWidth]);
+
+            const legendAxis = d3.axisBottom(legendScale)
+                .tickValues([0, 45000])
+                .tickFormat(d3.format(".0f"));
+
+            wrapper_challenge03.append("g")
+                .attr("class", "legend-axis")
+                .attr("transform", `translate(${(width - legendWidth - 24) / 2}, 220)`)
+                .call(legendAxis)
+                .selectAll(".tick text")
+                .attr("text-anchor", (d, i) => i === 0 ? "end" : "start")
+                .attr("x", (d, i) => i === 0 ? -10 : 6);
+        });
+    </script>
+</body>
+
+</html>
