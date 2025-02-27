@@ -60,8 +60,8 @@
             .range([40, width * 0.80]);
 
         const y = d3.scaleLinear()
-            .domain([0, d3.max(data, d => d.value)])
-            .range([height * 0.82, 16]);
+            .domain([0, 5000000])
+            .range([height * 0.82, 30]);
 
         // Create line generator
         const line = d3.line()
