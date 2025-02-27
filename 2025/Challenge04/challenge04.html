@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <title>Challenge 04</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;300;400;700&display=swap"
+        rel="stylesheet">
+    <link href="challenge04.css" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container" id="chart"></div>
+    <script type="module">
+        // Access data
+        import { data } from './challenge04.js';
+
+        // Add formatting
+        const formatDollar = d3.format(",");
+
+        // Create chart dimensions
+        const width = 1584 / 2;
+        const height = 2016 / 2;
+
+        // Draw canvas
+        const wrapper_challenge04 = d3.select("#chart")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .attr("preserveAspectRatio", "xMidYMid meet");
+
+        // Draw background
+        wrapper_challenge04.append("rect")
+            .attr("class", "background")
+            .attr("width", width)
+            .attr("height", height);
+
+        const groupWrapper = wrapper_challenge04.append("g")
+            .attr("transform", `translate(80,150)`);
+
+        // Add title
+        wrapper_challenge04.append("text")
+            .attr("class", "title")
+            .attr("x", (width) / 2)
+            .attr("y", 34)
+            .attr("text-anchor", "middle")
+            .html(`
+                <tspan x="${(width) / 2}" dy="1.2em" font-weight="800">VALUATION</tspan>
+                <tspan font-weight="100">OF TOWN AND CITY PROPERTY</tspan>
+                <tspan x="${(width) / 2}" dy="1.2em" font-weight="800">OWNED</tspan>
+                <tspan font-weight="100">BY GEORGIA</tspan> 
+                <tspan font-weight="800">NEGROES</tspan>
+            `);
+
+        // Create scales
+        const x = d3.scaleLinear()
+            .domain(d3.extent(data, d => d.year))
+            .range([40, width * 0.80]);
+
+        const y = d3.scaleLinear()
+            .domain([0, d3.max(data, d => d.value)])
+            .range([height * 0.82, 16]);
+
+        // Create line generator
+        const line = d3.line()
+            .x(d => x(d.year))
+            .y(d => y(d.value))
+            .curve(d3.curveMonotoneX);
+
+        const first = data.slice(6, 29);
+        const second = data.slice(0, 9);
+        const third = data.slice(28, 31);
+
+        // Draw data
+        groupWrapper.append("path")
+            .datum(second)
+            .attr("class", "")
+            .attr("d", line)
+            .attr("stroke", "#f5f5f5")
+            .attr("stroke-width", 5)
+            .attr("fill", "none");
+
+        groupWrapper.append("path")
+            .datum(second)
+            .attr("class", "")
+            .attr("d", line)
+            .attr("stroke", "#181616")
+            .attr("stroke-width", 3)
+            .attr("fill", "none");
+
+        groupWrapper.append("path")
+            .datum(third)
+            .attr("class", "")
+            .attr("d", line)
+            .attr("stroke", "#f5f5f5")
+            .attr("stroke-width", 5)
+            .attr("fill", "none");
+
+        groupWrapper.append("path")
+            .datum(third)
+            .attr("class", "")
+            .attr("d", line)
+            .attr("stroke", "#181616")
+            .attr("stroke-width", 3)
+            .attr("fill", "none");
+
+        groupWrapper.append("path")
+            .datum(first)
+            .attr("class", "line")
+            .attr("d", line)
+            .attr("stroke", "#f5f5f5")
+            .attr("stroke-width", 5)
+            .attr("fill", "none");
+
+        // Draw peripherals
+        groupWrapper.append("g")
+            .attr("class", "x-axis")
+            .attr("transform", `translate(0, ${height * 0.785})`)
+            .call(d3.axisBottom(x).ticks(4).tickFormat(d3.format("d")));
+
+        groupWrapper.append("g")
+            .attr("class", "y-axis")
+            .call(d3.axisLeft(y).ticks(5).tickFormat(d => d === 0 ? "" : d3.format(".2s")(d)));
+    </script>
+</body>
+
+</html>
