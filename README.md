@@ -21,3 +21,7 @@ I decided to participate using D3.js and allowing me to use a more modern style.
 
 ### Week 4
 ![Challenge 04](https://github.com/juanchiparra/du-bois-challenge/blob/main/2025/Challenge04/challenge04.png)
+
+### Week 5
+![Challenge 05](https://github.com/juanchiparra/du-bois-challenge/blob/main/2025/Challenge05/challenge05.png)
+
