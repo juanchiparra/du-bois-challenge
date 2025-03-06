@@ -1,0 +1,38 @@
+* {
+    font-family: 'JetBrains Mono', monospace;
+}
+
+body {
+    background-color: #f5f5f5;
+}
+
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.background {
+	fill: #181616;
+}
+
+.title {
+	font-size: 32px;
+	text-anchor: middle;
+	fill: #f5f5f5;
+}
+
+.min-value, .max-value {
+	font-size: 18px;
+	font-weight: 300;
+	fill: #f5f5f5;
+	opacity: 1;
+}
+
+.years {
+	font-size: 14px;
+	font-weight: 100;
+	fill: #f5f5f5;
+	opacity: 1;
+}
