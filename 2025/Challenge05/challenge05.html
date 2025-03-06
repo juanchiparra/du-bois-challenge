@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <title>challenge 05</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;300;400;700&display=swap"
+        rel="stylesheet">
+    <link href="challenge05.css" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container" id="chart"></div>
+    <script type="module">
+        // Access data
+        import { data } from './challenge05.js';
+
+        // Create chart dimensions
+        const width = 1584 / 2;
+        const height = 2016 / 2;
+
+        // Draw canvas
+        const wrapper_challenge04 = d3.select("#chart")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .attr("preserveAspectRatio", "xMidYMid meet");
+
+        // Draw background
+        wrapper_challenge04.append("rect")
+            .attr("class", "background")
+            .attr("width", width)
+            .attr("height", height);
+
+        const groupWrapper = wrapper_challenge04.append("g")
+            .attr("transform", `translate(74, 100)`);
+
+        // Add title
+        wrapper_challenge04.append("text")
+            .attr("class", "title")
+            .attr("x", (width) / 2)
+            .attr("y", 34)
+            .attr("text-anchor", "middle")
+            .html(`
+                <tspan x="${(width) / 2}" dy="1.2em" font-weight="800">ASSESSED VALUATION</tspan>
+                <tspan font-weight="100">OF ALL TAXABLE</tspan>
+                <tspan x="${(width) / 2}" dy="1.2em" font-weight="800">PROPERTY OWNED</tspan>
+                <tspan font-weight="100">BY GEORGIA</tspan> 
+                <tspan font-weight="800">NEGROES</tspan>
+            `);
+
+        // Create scales
+        const radiusScale = d3.scaleSqrt()
+            .domain([0, d3.max(data, d => d.value)])
+            .range([-400, 300]);
+
+        // Draw data
+        groupWrapper.selectAll("path")
+            .data(data)
+            .join("path")
+            .sort((a, b) => b.value - a.value)
+            .attr("fill", "none")
+            .attr("stroke", "white")
+            .attr("stroke-width", 1)
+            .attr("stroke-dasharray", "4, 2")
+            .attr("d", d => {
+                const r = radiusScale(d.value);
+                return `M${-r},0 A${r},${r} 0 0,1 ${r},0`;
+            })
+            .attr("transform", d => `translate(${radiusScale(d.value) + 20}, ${height / 2})`);
+
+        const ticksFormatted = data.map(d => ({ d: d.value, text: d.year }));
+
+        // Draw peripherals
+        const tickLabels = groupWrapper.selectAll("text")
+            .data(ticksFormatted)
+            .join("text")
+            .attr("class", "years")
+            .attr("transform", ({ d }) => `translate(${radiusScale(d) * 2 + 20}, ${height / 2 + 42}) rotate(-270)`)
+            .attr("dominant-baseline", "middle")
+            .text(d => d.text);
+
+        // Draw lines
+        groupWrapper.selectAll(".data-line")
+            .data(data)
+            .join("line")
+            .attr("class", "data-line")
+            .attr("stroke", "white")
+            .attr("stroke-width", 1)
+            .attr("stroke-dasharray", "4, 2")
+            .attr("x1", d => radiusScale(d.value) * 2 + 20)
+            .attr("x2", d => radiusScale(d.value) * 2 + 20) 
+            .attr("y1", height / 2)
+            .attr("y2", height / 2 + 40);
+
+        groupWrapper.append("line")
+            .attr("class", "horizontal")
+            .attr("stroke", "white")
+            .attr("stroke-width", 1)
+            .attr("x1", 0)
+            .attr("x2", width - 160)
+            .attr("y1", height / 2)
+            .attr("y2", height / 2);
+
+        // Add labels
+        const minValue = d3.min(data, d => d.value);
+        const maxValue = d3.max(data, d => d.value);
+
+        groupWrapper.append("text")
+            .attr("class", "min-value")
+            .attr("x", -60)
+            .attr("y", height / 2)
+
+            .attr("dominant-baseline", "middle")
+            .text(d3.format(".3s")(minValue));
+
+        groupWrapper.append("text")
+            .attr("class", "max-value")
+            .attr("x", width - 155)
+            .attr("y", height / 2)
+            .attr("dominant-baseline", "middle")
+            .text(d3.format(".4s")(maxValue));
+    </script>
+</body>
+
+</html>
