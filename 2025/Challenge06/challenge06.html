@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <title>challenge 06</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;300;400;700&display=swap"
+        rel="stylesheet">
+    <link href="Challenge06.css" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container" id="chart"></div>
+    <script type="module">
+        // Access data
+        import { data } from './Challenge06.js';
+
+        // Add formatting
+        const formatDollar = d3.format("$.3s");
+
+        // Create chart dimensions
+        const width = 1584 / 2;
+        const height = 2016 / 2;
+
+        // Draw canvas
+        const wrapper_challenge04 = d3.select("#chart")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .attr("preserveAspectRatio", "xMidYMid meet");
+
+        // Draw background
+        wrapper_challenge04.append("rect")
+            .attr("class", "background")
+            .attr("width", width)
+            .attr("height", height);
+
+        const groupWrapper = wrapper_challenge04.append("g")
+            .attr("transform", `translate(60, 200)`);
+
+        // Add title
+        wrapper_challenge04.append("text")
+            .attr("class", "title")
+            .attr("x", (width) / 2)
+            .attr("y", 34)
+            .attr("text-anchor", "middle")
+            .html(`
+                <tspan x="${(width) / 2}" dy="1.2em" font-weight="800">NEGRO PROPERTY</tspan>
+                <tspan font-weight="100">IN</tspan>
+                <tspan x="${(width) / 2}" dy="1.2em" font-weight="100">TWO CITIES OF</tspan>
+                <tspan font-weight="800">GEORGIA</tspan> 
+            `);
+
+        // Add legend
+        const legend = wrapper_challenge04.append("g")
+            .attr("transform", `translate(${(width) / 2 - 249}, 146)`);
+
+        const legendData = [
+            { label: "Savannah", fill: "white", stroke: "none" },
+            { label: "Atlanta", fill: "none", stroke: "white" }
+        ];
+
+        legend.selectAll("g")
+            .data(legendData)
+            .join("g")
+            .attr("transform", (d, i) => `translate(${i * 100}, 0)`)
+            .each(function (d) {
+                const g = d3.select(this);
+                g.append("circle")
+                    .attr("cx", 0)
+                    .attr("cy", 0)
+                    .attr("r", 8)
+                    .attr("fill", d.fill)
+                    .attr("stroke", d.stroke)
+                    .attr("stroke-width", 1)
+                    .attr("stroke-dasharray", "2,2");
+
+                g.append("text")
+                    .attr("x", 14)
+                    .attr("y", 5)
+                    .attr("fill", "white")
+                    .attr("font-size", 13)
+                    .text(d.label);
+            });
+
+        const sizeLegend = wrapper_challenge04.append("g")
+            .attr("transform", `translate(${(width) / 2 - 55}, 146)`);
+
+        sizeLegend.append("circle")
+            .attr("cx", 0)
+            .attr("cy", 0)
+            .attr("r", 8)
+            .attr("fill", "none")
+            .attr("stroke", "white")
+            .attr("stroke-width", 1);
+
+        sizeLegend.append("text")
+            .attr("x", 14)
+            .attr("y", 5)
+            .attr("fill", "white")
+            .attr("font-size", 13)
+            .text("Bigger circles = higher property value");
+
+        // Create scales
+        const xScale = d3.scalePoint()
+            .domain(data.map(d => d.year))
+            .range([0, width * 0.90])
+            .padding(0.5);
+
+        const yScale = d3.scaleLinear()
+            .domain([0, d3.max(data, d => d.owners) + 200])
+            .range([height * 0.70, 0]);
+
+        const radiusScale = d3.scaleSqrt()
+            .domain([0, d3.max(data, d => d.value)])
+            .range([0, 50]);
+
+        // Add X axis
+        groupWrapper.append("g")
+            .attr("class", "axis")
+            .attr("transform", `translate(0,${height * 0.72})`)
+            .call(d3.axisBottom(xScale).tickFormat(d3.format("d")))
+            .attr("color", "white");
+
+        // Add Y axis
+        groupWrapper.append("g")
+            .attr("class", "axis")
+            .attr("transform", `translate(0,0)`)
+            .call(d3.axisLeft(yScale).ticks(3).tickFormat((d, i, nodes) => i === nodes.length - 1 ? `${d}\nowners` : d))
+            .attr("color", "white")
+            .selectAll("text")
+            .attr("text-anchor", "start")
+            .each(function (d, i, nodes) {
+                if (i === nodes.length - 1) {
+                    const text = d3.select(this);
+                    const lines = text.text().split('\n');
+                    text.text('');
+                    lines.forEach((line, index) => {
+                        text.append('tspan')
+                            .attr('x', -8)
+                            .attr('dy', index === 0 ? 0 : '1.2em')
+                            .text(line);
+                    });
+                }
+            });
+
+        // Draw bubbles
+        groupWrapper.selectAll("circle")
+            .data(data)
+            .join("circle")
+            .attr("cx", d => xScale(d.year))
+            .attr("cy", d => yScale(d.owners))
+            .attr("r", d => radiusScale(d.value))
+            .attr("fill", d => d.city === "Savannah" ? "white" : "none")
+            .attr("stroke", d => d.city === "Atlanta" ? "white" : "none")
+            .attr("stroke-width", d => d.city === "Atlanta" ? 1 : 0)
+            .attr("stroke-dasharray", "2,2");
+
+        // Add labels
+        groupWrapper.selectAll("text.label")
+            .data(data.filter(d => d.showLabel))
+            .join("text")
+            .attr("class", "label")
+            .attr("x", d => d.labelX)
+            .attr("y", d => d.labelY)
+            .attr("fill", "white")
+            .attr("font-size", 13)
+            .text(d => formatDollar(d.value));
+
+    </script>
+</body>
+
+</html>
