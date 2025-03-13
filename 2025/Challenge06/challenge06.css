@@ -1,0 +1,39 @@
+* {
+    font-family: 'JetBrains Mono', monospace;
+}
+
+body {
+    background-color: #f5f5f5;
+}
+
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.background {
+	fill: #181616;
+}
+
+.title {
+	font-size: 32px;
+	text-anchor: middle;
+	fill: #f5f5f5;
+}
+
+.axis {
+	color: #f5f5f5;
+	font-size: 18px;
+	font-weight: 100;
+}
+
+.axis .domain,
+.axis .tick line {
+	display: none;
+}
+
+.label {
+	font-size: 15px;
+}
