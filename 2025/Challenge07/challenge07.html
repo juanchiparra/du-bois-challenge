@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <title>challenge 07</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;300;400;700&display=swap"
+        rel="stylesheet">
+    <link href="Challenge07.css" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container" id="chart"></div>
+    <script type="module">
+        // Access data
+        import { data } from './Challenge07.js';
+
+        // Add formatting
+        const formatDollar = d3.format("$.3s");
+
+        // Create chart dimensions
+        const width = 1584 / 2;
+        const height = 2016 / 2;
+        const innerRadius = 100;
+        const outerRadius = Math.min(width, height) / 2 - 50;
+
+        // Draw canvas
+        const svg = d3.select("#chart")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .attr("preserveAspectRatio", "xMidYMid meet")
+            .append("g")
+            .attr("transform", `translate(${width / 2}, ${height / 2})`);
+
+        // Draw background
+        svg.append("rect")
+            .attr("class", "background")
+            .attr("x", -width / 2)
+            .attr("y", -height / 2)
+            .attr("width", width)
+            .attr("height", height);
+
+        const groupWrapper = svg.append("g")
+            .attr("transform", `translate(60,60)`);
+
+        // Add title
+        svg.append("text")
+            .attr("class", "title")
+            .attr("x", 0)
+            .attr("y", -height / 2 + 40)
+            .attr("text-anchor", "middle")
+            .html(`
+                <tspan x="0" dy="1.2em" font-weight="800">ASSESSED VALUE</tspan>
+                <tspan font-weight="100">OF HOUSEHOLD AND KITCHEN</tspan>
+                <tspan x="0" dy="1.2em" font-weight="100">FURNITURE</tspan>
+                <tspan font-weight="800">OWNED</tspan> 
+                <tspan font-weight="100">BY GEORGIA</tspan> 
+                <tspan font-weight="800">NEGROES</tspan> 
+            `);
+
+        // Create scales
+        const xScale = d3.scaleBand()
+            .domain(data.map(d => d.year))
+            .range([0, 2 * Math.PI])
+            .align(0);
+
+        const yScale = d3.scaleRadial()
+            .domain([0, d3.max(data, d => d.value)])
+            .range([innerRadius, outerRadius]);
+
+        // Draw data
+        groupWrapper.append("g")
+            .selectAll("path")
+            .data(data)
+            .join("path")
+            .attr("fill", "white")
+            .attr("d", d3.arc()
+                .innerRadius(innerRadius)
+                .outerRadius(d => yScale(d.value))
+                .startAngle(d => xScale(d.year))
+                .endAngle(d => xScale(d.year) + xScale.bandwidth())
+                .padAngle(0.01)
+                .padRadius(innerRadius));
+
+        // Add labels
+        groupWrapper.append("g")
+            .selectAll("text")
+            .data(data)
+            .join("text")
+            .attr("class", "label")
+            .attr("x", d => (yScale(d.value) + 50) * Math.cos((xScale(d.year) + xScale.bandwidth() / 2) - Math.PI / 2))
+            .attr("y", d => (yScale(d.value) + 50) * Math.sin((xScale(d.year) + xScale.bandwidth() / 2) - Math.PI / 2))
+            .attr("dy", "0.35em")
+            .attr("fill", "white")
+            .attr("text-anchor", "middle")
+            .text(d => formatDollar(d.value));
+
+        const arcGenerator = d3.arc()
+            .innerRadius(innerRadius - 165)
+            .outerRadius(outerRadius);
+
+        groupWrapper.append("g")
+            .selectAll("path.date-arc")
+            .data(data)
+            .join("path")
+            .attr("class", "date-arc")
+            .attr("id", (d, i) => `date-arc-${i}`)
+            .attr("d", d => arcGenerator({
+            startAngle: xScale(d.year) + Math.PI / -3.1,
+            endAngle: xScale(d.year) + xScale.bandwidth() + Math.PI / -3.1
+            }))
+            .attr("fill", "none")
+            .attr("stroke", "none");
+
+        groupWrapper.append("g")
+            .selectAll("text.date-label")
+            .data(data)
+            .join("text")
+            .attr("class", "date-label")
+            .append("textPath")
+            .attr("xlink:href", (d, i) => `#date-arc-${i}`)
+            .attr("startOffset", "50%")
+            .attr("text-anchor", "middle")
+            .attr("fill", d => d.year === 1875 ? "#f5f5f5" : "#181616")
+            .attr("font-size", 12)
+            .attr("font-weight", 800)
+            .text(d => d.year);
+
+    </script>
+</body>
+
+</html>
