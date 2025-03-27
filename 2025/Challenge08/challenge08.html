@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <title>challenge 08</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;300;400;700&display=swap"
+        rel="stylesheet">
+    <link href="challenge08.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js"></script>
+</head>
+
+<body>
+    <div class="container" id="chart"></div>
+    <script type="module">
+        // Access data
+        import { data } from './Challenge08.js';
+
+        // Add formatting
+        const formatData = d3.format(".3s");
+
+        // Create chart dimensions
+        const width = 1584 / 2;
+        const height = 2016 / 2;
+
+        // Draw canvas
+        const svg = d3.select("#chart")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .attr("preserveAspectRatio", "xMidYMid meet")
+            .append("g")
+            .attr("transform", `translate(${width / 2}, ${height / 2})`);
+
+        // Draw background
+        svg.append("rect")
+            .attr("class", "background")
+            .attr("x", -width / 2)
+            .attr("y", -height / 2)
+            .attr("width", width)
+            .attr("height", height);
+
+        // Add title
+        svg.append("text")
+            .attr("class", "title")
+            .attr("x", 0)
+            .attr("y", -height / 2 + 40)
+            .attr("text-anchor", "middle")
+            .html(`
+                <tspan x="0" dy="1.2em" font-weight="800">OCCUPATIONS</tspan>
+                <tspan font-weight="100">OF GEORGIA</tspan>
+                <tspan font-weight="800">NEGROES</tspan>
+            `);
+
+        svg.append("text")
+            .attr("class", "text")
+            .attr("x", 0)
+            .attr("y", -height / 2 + 110)
+            .attr("text-anchor", "middle")
+            .text('Males over 10');
+
+
+        // Create scales
+        const color = d3.scaleOrdinal()
+            .range(["white"]);
+
+        // Generate nodes and links
+        const nodes = [];
+        const links = [];
+
+        data.forEach(d => {
+            if (!nodes.some(n => n.name === d.occupation)) {
+                nodes.push({ name: d.occupation });
+            }
+            if (!nodes.some(n => n.name === d.category)) {
+                nodes.push({ name: d.category });
+            }
+            links.push({
+                source: nodes.findIndex(n => n.name === d.occupation),
+                target: nodes.findIndex(n => n.name === d.category),
+                value: d.value
+            });
+        });
+
+        const sankeyWidth = width * 0.6;
+        const sankeyHeight = height * 0.81;
+        const sankeyXOffset = -sankeyWidth / 2;
+        const sankeyYOffset = -sankeyHeight / 2.25;
+
+        const sankey = d3.sankey()
+            .nodeWidth(10)
+            .nodePadding(44)
+            .extent([
+                [sankeyXOffset, sankeyYOffset],
+                [sankeyXOffset + sankeyWidth, sankeyYOffset + sankeyHeight]
+            ])
+            .nodeSort((a, b) => {
+                if (a.name === "Others") return 1;
+                if (b.name === "Others") return -1;
+                return d3.ascending(b.value, a.value);
+            });
+        const { nodes: sankeyNodes, links: sankeyLinks } = sankey({
+            nodes: nodes.map(d => Object.assign({}, d)),
+            links: links.map(d => Object.assign({}, d))
+        });
+
+        // Calculate values
+        const sumValues = {};
+        links.forEach(link => {
+            const sourceName = sankeyNodes[link.source].name;
+            const targetName = sankeyNodes[link.target].name;
+            if (!sumValues[sourceName]) {
+                sumValues[sourceName] = 0;
+            }
+            if (!sumValues[targetName]) {
+                sumValues[targetName] = 0;
+            }
+            sumValues[sourceName] += link.value;
+            sumValues[targetName] += link.value;
+        });
+
+        // Draw data
+        svg.append("g")
+            .selectAll("rect")
+            .data(sankeyNodes)
+            .enter().append("rect")
+            .attr("x", d => d.x0)
+            .attr("y", d => d.y0)
+            .attr("height", d => d.y1 - d.y0)
+            .attr("width", d => d.x1 - d.x0)
+            .attr("fill", d => color(d.name))
+            .attr("stroke", "none");
+
+        svg.append("g")
+            .attr("fill", "none")
+            .selectAll("path")
+            .data(sankeyLinks)
+            .enter().append("path")
+            .attr("d", d3.sankeyLinkHorizontal())
+            .attr("stroke", "white")
+            .attr("stroke-width", d => Math.max(1, d.width))
+            .attr("stroke-opacity", 0.4);
+
+        // Add labels
+        svg.append("g")
+            .selectAll("text")
+            .data(sankeyNodes)
+            .enter().append("text")
+
+            .attr("y", d => (d.y1 + d.y0) / 2)
+            .attr("text-anchor", d => d.x0 < 0 ? "end" : "start")
+            .each(function (d) {
+                const text = d3.select(this);
+                const lines = d.name.split("\n");
+                lines.forEach((line, i) => {
+                    text.append("tspan")
+                        .attr("x", d.x0 < 0 ? d.x0 - 6 : d.x1 + 6)
+                        .attr("dy", lines.length === 1 ? (i === 0 ? "0.3em" : "1em") : (i === 0 ? "0em" : "1em"))
+                        .style("font-size", "14px")
+                        .style("font-weight", "bold")
+                        .style("fill", "white")
+                        .text(line);
+                });
+
+                if (d.targetLinks.length > 0) {
+                    text.append("tspan")
+                        .attr("class", "value")
+                        .attr("x", d.x0 < 0 ? d.x0 - 6 : d.x1 + 6)
+                        .attr("dy", "1.2em")
+                        .style("font-size", "16px")
+                        .style("font-weight", "normal")
+                        .style("fill", "lightgray")
+                        .text(`${formatData(sumValues[d.name] || 0)}`);
+                }
+            });
+    </script>
+</body>
+
+</html>
