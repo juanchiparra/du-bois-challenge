@@ -30,3 +30,6 @@ I decided to participate using D3.js and allowing me to use a more modern style.
 
 ### Week 7
 ![Challenge 07](https://github.com/juanchiparra/du-bois-challenge/blob/main/2025/Challenge07/challenge07.png)
+
+### Week 8
+![Challenge 08](https://github.com/juanchiparra/du-bois-challenge/blob/main/2025/Challenge08/challenge08.png)
