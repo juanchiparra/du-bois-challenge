@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <title>Challenge 09</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;300;400;700&display=swap"
+        rel="stylesheet">
+    <link href="Challenge09.css" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container" id="chart"></div>
+    <script type="module">
+        // Access data
+        import { data } from './Challenge09.js';
+
+        // Create chart dimensions
+        const width = 1584 / 2;
+        const height = 2016 / 2;
+        const margin = { top: 200, right: 50, bottom: 50, left: 50 };
+
+        const innerWidth = width - margin.left - margin.right;
+        const innerHeight = height - margin.top - margin.bottom;
+
+        // Draw canvas
+        const svg = d3.select("#chart")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .attr("viewBox", `0 0 ${width} ${height}`)
+            .attr("preserveAspectRatio", "xMidYMid meet");
+
+        // Draw background
+        svg.append("rect")
+            .attr("class", "background")
+            .attr("x", 0)
+            .attr("y", 0)
+            .attr("width", width)
+            .attr("height", height);
+
+        const groupWrapper = svg.append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`);
+
+        // Add title
+        svg.append("text")
+            .attr("class", "title")
+            .attr("x", width / 2)
+            .attr("y", 40)
+            .attr("text-anchor", "middle")
+            .html(`
+                <tspan x="${width / 2}" dy="1.2em" font-weight="800">OCCUPATIONS</tspan>
+                <tspan font-weight="100">OF</tspan>
+                <tspan font-weight="800">NEGROES</tspan>
+                <tspan font-weight="100">AND</tspan>
+                <tspan x="${width / 2}" dy="1.2em" font-weight="800">WHITES</tspan>
+                <tspan font-weight="100">IN GEORGIA</tspan>
+            `);
+
+        // Create scales
+        const color = d3.scaleOrdinal()
+            .domain(data.map(d => d.segment))
+            .range(["#f1f1f1", "#d8d8d8", "#bfbfbf", "#737373", "#343434", "#bfbfbf", "#d8d8d8"]);
+
+        // Generate treemap
+        const treemap = data => d3.treemap()
+            .round(true)
+            .tile(d3.treemapResquarify)
+            .size([innerWidth, innerHeight])
+            (d3.hierarchy(d3.group(data, d => d.market, d => d.segment))
+                .sum(d => Math.max(d.value, 1)))
+
+        const root = treemap(data);
+
+        const node = groupWrapper.selectAll("g")
+            .data(root.descendants())
+            .join("g")
+            .attr("transform", d => `translate(${d.x0},${d.y0})`);
+
+        const format = d => d.toLocaleString();
+
+
+        // Draw data
+        const column = node.filter(d => d.depth === 1);
+
+        column.append("text")
+            .attr("x", 3)
+            .attr("y", "-0.8em")
+            .attr("font-size", "18px")
+            .style("font-weight", "bold")
+            .style("fill", "white")
+            .text(d => d.data[0]);
+
+        column.append("line")
+            .attr("x1", -0.5)
+            .attr("x2", -0.5)
+            .attr("y1", -30)
+            .attr("y2", d => d.y1 - d.y0)
+            .attr("stroke", "#000");
+
+        const cell = node.filter(d => d.depth === 2);
+
+        cell.append("rect")
+            .attr("fill", d => color(d.data[0]))
+            .attr("width", d => d.x1 - d.x0 - 1)
+            .attr("height", d => d.y1 - d.y0 - 1);
+        cell.append("text")
+            .attr("x", 3)
+            .attr("y", "1.3em")
+            .attr("fill", d => d.data[0].includes("Professions") || d.data[0].includes("Trade") ? "#f1f1f1" : "f1f1f1")
+            .attr("font-size", d =>
+                d.data[0].includes("Professions") ? "11px" :
+                    d.data[0].includes("Trade") && d.parent.data[0] === "Negroes" ? "11px" :
+                        d.data[0].includes("Manufacturing") && d.parent.data[0] === "Negroes" ? "12px" :
+                            d.data[0].includes("Domestic") && d.parent.data[0] === "Whites" ? "13px" :
+                                "16px")
+            .selectAll("tspan")
+            .data(d => d.data[0].split("\n"))
+            .join("tspan")
+            .attr("x", 3)
+            .attr("dy", (d, i) => i === 0 ? 0 : "1.2em")
+            .text(d => d);
+
+        cell.append("text")
+            .attr("x", 3)
+            .attr("y", d => d.y1 - d.y0 - 10)
+            .attr("fill", d => d.data[0].includes("Professions") || d.data[0].includes("Trade") ? "#f1f1f1" : "f1f1f1")
+            .attr("fill-opacity", 1)
+            .attr("font-size", "17px")
+            .attr("font-weight", d => d.data[0].includes("Professions") || d.data[0].includes("Trade") ? "normal" : "bold")
+            .text(d => `${format(d.value)}%`);
+    </script>
+</body>
+
+</html>
