@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <title>Challenge 10</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;300;400;700&display=swap"
+        rel="stylesheet">
+    <link href="Challenge10.css" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container" id="chart"></div>
+    <script type="module">
+        // Access data
+        import { data } from './Challenge10.js';
+
+        // Create chart dimensions
+        const width = 1584 / 2;
+        const height = 2016 / 2;
+        const margin = { top: 200, right: 50, bottom: 75, left: 50 };
+
+        const innerWidth = width - margin.left - margin.right;
+        const innerHeight = height - margin.top - margin.bottom;
+
+        // Draw canvas
+        const svg = d3.select("#chart")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .attr("viewBox", `0 0 ${width} ${height}`)
+            .attr("preserveAspectRatio", "xMidYMid meet");
+
+        // Draw background
+        svg.append("rect")
+            .attr("class", "background")
+            .attr("x", 0)
+            .attr("y", 0)
+            .attr("width", width)
+            .attr("height", height);
+
+        const groupWrapper = svg.append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`);
+
+        // Add title
+        svg.append("text")
+            .attr("class", "title")
+            .attr("x", width / 2)
+            .attr("y", 40)
+            .attr("text-anchor", "middle")
+            .html(`
+                <tspan x="${width / 2}" dy="1.2em" font-weight="800">INCOME</tspan>
+                <tspan font-weight="100">AND</tspan>
+                <tspan font-weight="800">EXPENDITURE</tspan>
+                <tspan font-weight="100">OF</tspan>
+                <tspan x="${width / 2}" dy="1.2em" font-weight="800">150 NEGRO FAMILIES</tspan>
+                <tspan font-weight="100">IN ATLANTA</tspan>
+            `);
+
+
+        // Add legend
+        const legendData = [
+            { label: "Rent", color: "#f1f1f1" },
+            { label: "Food", color: "#d8d8d8" },
+            { label: "Clothes", color: "#bfbfbf" },
+            { label: "Taxes", color: "#737373" },
+            { label: "Other Expenses & Savings", color: "#343434" }
+        ];
+
+        const legend = svg.append("g")
+            .attr("class", "legend")
+            .attr("transform", `translate(${margin.left + 64}, ${150})`);
+
+        legend.selectAll("g")
+            .data(legendData)
+            .join("g")
+            .attr("transform", (d, i) => `translate(${i * 90}, 0)`)
+            .each(function (d) {
+                const g = d3.select(this);
+                g.append("rect")
+                    .attr("width", 15)
+                    .attr("height", 15)
+                    .attr("fill", d.color);
+
+                g.append("text")
+                    .attr("x", 20)
+                    .attr("y", 12)
+                    .style("fill", "white")
+                    .style("font-size", "12px")
+                    .text(d.label);
+            });
+
+
+        // Create scales
+        const xScale = d3.scaleBand()
+            .domain(data.map(d => d.class))
+            .range([0, innerWidth])
+            .padding(0.2);
+
+        const yScale = d3.scaleLinear()
+            .domain([0, d3.max(data, d => d.rent + d.food + d.clothes + d.tax + d.other)])
+            .range([innerHeight, 0]);
+
+        const color = d3.scaleOrdinal()
+            .domain(["rent", "food", "clothes", "tax", "other"])
+            .range(["#f1f1f1", "#d8d8d8", "#bfbfbf", "#737373", "#343434"]);
+
+        // Draw data
+        const stack = d3.stack()
+            .keys(["rent", "food", "clothes", "tax", "other"]);
+
+        const stackedData = stack(data);
+
+        groupWrapper.selectAll(".bars")
+            .data(stackedData)
+            .join("g")
+            .attr("class", "bars")
+            .attr("fill", d => color(d.key))
+            .selectAll("rect")
+            .data(d => d)
+            .join("rect")
+            .attr("x", d => xScale(d.data.class))
+            .attr("y", d => yScale(d[1]))
+            .attr("height", d => yScale(d[0]) - yScale(d[1] + 0.09))
+            .attr("width", xScale.bandwidth());
+
+        // Draw peripheral
+        groupWrapper.append("g")
+            .attr("transform", `translate(0, ${innerHeight + 4})`)
+            .call(d3.axisBottom(xScale).tickSize(0))
+            .call(g => g.select(".domain").attr("stroke", "none"))
+            .selectAll("text")
+            .style("fill", "white")
+            .style("font-size", "12px");
+
+        groupWrapper.append("g")
+            .call(d3.axisLeft(yScale)
+            .tickFormat(d => `${d}%`)
+            .tickSize(0))
+            .call(g => g.select(".domain").attr("stroke", "none"))
+            .selectAll("text")
+            .style("fill", "white")
+            .style("font-size", "12px");
+
+        const groupStatus = [
+            { label: "Poor", range: ["$100-200", "$200-300"] },
+            { label: "Fair", range: ["$300-400", "$400-500"] },
+            { label: "Comfortable", range: ["$500-750", "$750-1000"] },
+            { label: "Well-to-do", range: ["Over $1000"] }
+        ];
+
+        groupWrapper.selectAll(".label")
+            .data(groupStatus)
+            .join("text")
+            .attr("class", "label")
+            .attr("x", d => {
+                const range = d.range.map(r => xScale(r) + xScale.bandwidth() / 2);
+                return range.length > 1 ? (range[0] + range[1]) / 2 : range[0];
+            })
+            .attr("y", innerHeight + 40)
+            .attr("text-anchor", "middle")
+            .style("fill", "white")
+            .style("font-size", "14px")
+            .text(d => d.label);
+    </script>
+</body>
+
+</html>
